@@ -62,6 +62,7 @@ class KernelMF(RecommenderBase):
         min_rating: int = 0,
         max_rating: int = 5,
         verbose: int = 1,
+        update_item_biases: bool = True,
     ):
         if kernel not in ("linear", "sigmoid", "rbf"):
             raise ValueError("Kernel must be one of linear, sigmoid, or rbf")
@@ -76,6 +77,7 @@ class KernelMF(RecommenderBase):
         self.lr = lr
         self.init_mean = init_mean
         self.init_sd = init_sd
+        self.update_item_biases = update_item_biases
         return
 
     def fit(self, X: pd.DataFrame, y: pd.Series):
@@ -123,6 +125,7 @@ class KernelMF(RecommenderBase):
             min_rating=self.min_rating,
             max_rating=self.max_rating,
             verbose=self.verbose,
+            update_item_biases=self.update_item_biases,
         )
 
         return self
@@ -335,6 +338,7 @@ def _sgd(
     verbose: int,
     update_user_params: bool = True,
     update_item_params: bool = True,
+    update_item_biases: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, list]:
     """
     Performs stochastic gradient descent to estimate parameters.
@@ -423,6 +427,9 @@ def _sgd(
                     update_user_params=update_user_params,
                     update_item_params=update_item_params,
                 )
+
+            if not update_item_biases:
+                item_biases *= 0
 
         # Calculate error and print
         rmse = _calculate_rmse(
